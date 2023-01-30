@@ -1,27 +1,10 @@
-interface FormProps {
-  firstName: string;
-  lastName: string;
-  setFirstName: (name: string) => void;
-  setLastName: (name: string) => void;
-}
+import { FullNameKey, useFullNameStore } from "./store";
 
-function Form(props: FormProps) {
-  const { firstName, lastName, setFirstName, setLastName } = props;
-
+function Form() {
   return (
     <div className="container stack">
-      <Input
-        name="firstName"
-        label="First name"
-        value={firstName}
-        onChange={setFirstName}
-      />
-      <Input
-        name="lastName"
-        label="Last name"
-        value={lastName}
-        onChange={setLastName}
-      />
+      <Input name="firstName" label="First name" />
+      <Input name="lastName" label="Last name" />
     </div>
   );
 }
@@ -29,22 +12,22 @@ function Form(props: FormProps) {
 export default Form;
 
 interface InputProps {
-  name: string;
+  name: FullNameKey;
   label: string;
-  value: string;
-  onChange: (value: string) => void;
 }
 
 function Input(props: InputProps) {
-  const { name, label, value, onChange } = props;
+  const { name, label } = props;
+  const store = useFullNameStore();
+
   return (
     <label htmlFor={name} className="container">
       <span className="label">{label}</span>
       <input
         name={name}
         id={name}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={store.fullName[name]}
+        onChange={(e) => store.setFullName({ [name]: e.target.value })}
       />
     </label>
   );

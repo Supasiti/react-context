@@ -1,14 +1,10 @@
-interface DisplayProps {
-  firstName: string;
-  lastName: string;
-}
+import { FullNameKey, useFullNameStore } from "./store";
 
-function Display(props: DisplayProps) {
-  const { firstName, lastName } = props;
+function Display() {
   return (
     <div className="container stack">
-      <Info label="First name" value={firstName} />
-      <Info label="Last name" value={lastName} />
+      <Info label="First name" name="firstName" />
+      <Info label="Last name" name="lastName" />
     </div>
   );
 }
@@ -17,14 +13,16 @@ export default Display;
 
 interface InfoProps {
   label: string;
-  value: string;
+  name: FullNameKey;
 }
 
 function Info(props: InfoProps) {
+  const { fullName } = useFullNameStore();
+
   return (
     <div className="container grid">
       <div>{props.label}</div>
-      <div>{props.value}</div>
+      <div>{fullName[props.name]}</div>
     </div>
   );
 }
