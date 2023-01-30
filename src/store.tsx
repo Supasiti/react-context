@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
 
 export interface FullName {
   firstName: string;
@@ -8,19 +8,33 @@ export type FullNameKey = keyof FullName;
 
 const initialValue = { firstName: "", lastName: "" };
 
+const subscribers = new Set<(value: FullName) => void>();
+
 const useFullNameValue = () => {
-  const [state, setState] = useState(initialValue);
-  const setFullName = (newName: Partial<FullName>) => {
-    setState((prev) => ({ ...prev, ...newName }));
+  const stateRef = useRef(initialValue);
+
+  const setState = (newName: Partial<FullName>) => {
+    stateRef.current = { ...stateRef.current, ...newName };
+    subscribers.forEach((listener) => {
+      listener(stateRef.current)
+    })
   };
-  return { fullName: state, setFullName };
+
+  const getState = () => stateRef.current;
+
+  const subscribe = (listener: (value: FullName) => void) => {
+    subscribers.add(listener);
+    return () => subscribers.delete(listener);
+  }
+
+  return { getState, setState, subscribe };
 };
 
-type FullNameContext = ReturnType<typeof useFullNameValue>;
+type FullNameValue = ReturnType<typeof useFullNameValue>;
 
-const fullNameContext = createContext<FullNameContext | null>(null);
+const fullNameContext = createContext<FullNameValue | null>(null);
 
-export interface FullNameProviderProps {
+interface FullNameProviderProps {
   children: ReactNode;
 }
 
@@ -34,6 +48,12 @@ export function FullNameProvider(props: FullNameProviderProps) {
 }
 
 export const useFullNameStore = () => {
-  const context = useContext(fullNameContext);
-  return context!;
+  const context = useContext(fullNameContext)!;
+  const [state, setState] = useState<FullName>(() => context.getState());
+
+  useEffect(() => {
+    context.subscribe((value) => setState(value))
+  }, [])
+
+  return {...state, setStore: context.setState};
 };

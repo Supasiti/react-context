@@ -26,8 +26,8 @@ function Input(props: InputProps) {
       <input
         name={name}
         id={name}
-        value={store.fullName[name]}
-        onChange={(e) => store.setFullName({ [name]: e.target.value })}
+        value={store[name]}
+        onChange={(e) => store.setStore({ [name]: e.target.value })}
       />
     </label>
   );
