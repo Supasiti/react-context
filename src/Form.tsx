@@ -18,7 +18,7 @@ interface InputProps {
 
 function Input(props: InputProps) {
   const { name, label } = props;
-  const store = useFullNameStore();
+  const [value, handleChange] = useFullNameStore((state) => state[name]);
 
   return (
     <label htmlFor={name} className="container">
@@ -26,8 +26,8 @@ function Input(props: InputProps) {
       <input
         name={name}
         id={name}
-        value={store[name]}
-        onChange={(e) => store.setStore({ [name]: e.target.value })}
+        value={value}
+        onChange={(e) => handleChange({ [name]: e.target.value })}
       />
     </label>
   );

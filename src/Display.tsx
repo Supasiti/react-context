@@ -17,12 +17,12 @@ interface InfoProps {
 }
 
 function Info(props: InfoProps) {
-  const store  = useFullNameStore();
+  const [value,]  = useFullNameStore((state) => state[props.name]);
 
   return (
     <div className="container grid">
       <div>{props.label}</div>
-      <div>{store[props.name]}</div>
+      <div>{value}</div>
     </div>
   );
 }

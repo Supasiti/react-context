@@ -1,4 +1,11 @@
-import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 export interface FullName {
   firstName: string;
@@ -16,8 +23,8 @@ const useFullNameValue = () => {
   const setState = (newName: Partial<FullName>) => {
     stateRef.current = { ...stateRef.current, ...newName };
     subscribers.forEach((listener) => {
-      listener(stateRef.current)
-    })
+      listener(stateRef.current);
+    });
   };
 
   const getState = () => stateRef.current;
@@ -25,7 +32,7 @@ const useFullNameValue = () => {
   const subscribe = (listener: (value: FullName) => void) => {
     subscribers.add(listener);
     return () => subscribers.delete(listener);
-  }
+  };
 
   return { getState, setState, subscribe };
 };
@@ -47,13 +54,17 @@ export function FullNameProvider(props: FullNameProviderProps) {
   );
 }
 
-export const useFullNameStore = () => {
+export const useFullNameStore = <T,>(
+  selector: (state: FullName) => T
+): [T, (newValue: Partial<FullName>) => void] => {
   const context = useContext(fullNameContext)!;
-  const [state, setState] = useState<FullName>(() => context.getState());
+  const [localState, setLocalState] = useState(() =>
+    selector(context.getState())
+  );
 
   useEffect(() => {
-    context.subscribe((value) => setState(value))
-  }, [])
+    context.subscribe((value) => setLocalState(selector(value)));
+  }, []);
 
-  return {...state, setStore: context.setState};
+  return [localState, context.setState];
 };
