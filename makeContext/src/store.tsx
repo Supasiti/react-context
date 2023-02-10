@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { makeStore } from "./makeStore";
 
 export interface FullName {
   firstName: string;
@@ -15,56 +16,61 @@ export type FullNameKey = keyof FullName;
 
 const initialValue = { firstName: "", lastName: "" };
 
-const subscribers = new Set<(value: FullName) => void>();
+const { StoreProvider: FullNameProvider, useStore: useFullNameStore } =
+  makeStore(initialValue);
 
-const useFullNameValue = () => {
-  const stateRef = useRef(initialValue);
+export { FullNameProvider, useFullNameStore };
 
-  const setState = (newName: Partial<FullName>) => {
-    stateRef.current = { ...stateRef.current, ...newName };
-    subscribers.forEach((listener) => {
-      listener(stateRef.current);
-    });
-  };
+// const subscribers = new Set<(value: FullName) => void>();
 
-  const getState = () => stateRef.current;
+// const useFullNameValue = () => {
+//   const stateRef = useRef(initialValue);
 
-  const subscribe = (listener: (value: FullName) => void) => {
-    subscribers.add(listener);
-    return () => subscribers.delete(listener);
-  };
+//   const setState = (newName: Partial<FullName>) => {
+//     stateRef.current = { ...stateRef.current, ...newName };
+//     subscribers.forEach((listener) => {
+//       listener(stateRef.current);
+//     });
+//   };
 
-  return { getState, setState, subscribe };
-};
+//   const getState = () => stateRef.current;
 
-type FullNameValue = ReturnType<typeof useFullNameValue>;
+//   const subscribe = (listener: (value: FullName) => void) => {
+//     subscribers.add(listener);
+//     return () => subscribers.delete(listener);
+//   };
 
-const fullNameContext = createContext<FullNameValue | null>(null);
+//   return { getState, setState, subscribe };
+// };
 
-interface FullNameProviderProps {
-  children: ReactNode;
-}
+// type FullNameValue = ReturnType<typeof useFullNameValue>;
 
-export function FullNameProvider(props: FullNameProviderProps) {
-  const value = useFullNameValue();
-  return (
-    <fullNameContext.Provider value={value}>
-      {props.children}
-    </fullNameContext.Provider>
-  );
-}
+// const fullNameContext = createContext<FullNameValue | null>(null);
 
-export const useFullNameStore = <T,>(
-  selector: (state: FullName) => T
-): [T, (newValue: Partial<FullName>) => void] => {
-  const context = useContext(fullNameContext)!;
-  const [localState, setLocalState] = useState(() =>
-    selector(context.getState())
-  );
+// interface FullNameProviderProps {
+//   children: ReactNode;
+// }
 
-  useEffect(() => {
-    context.subscribe((value) => setLocalState(selector(value)));
-  }, []);
+// export function FullNameProvider(props: FullNameProviderProps) {
+//   const value = useFullNameValue();
+//   return (
+//     <fullNameContext.Provider value={value}>
+//       {props.children}
+//     </fullNameContext.Provider>
+//   );
+// }
 
-  return [localState, context.setState];
-};
+// export const useFullNameStore = <T,>(
+//   selector: (state: FullName) => T
+// ): [T, (newValue: Partial<FullName>) => void] => {
+//   const context = useContext(fullNameContext)!;
+//   const [localState, setLocalState] = useState(() =>
+//     selector(context.getState())
+//   );
+
+//   useEffect(() => {
+//     context.subscribe((value) => setLocalState(selector(value)));
+//   }, []);
+
+//   return [localState, context.setState];
+// };
