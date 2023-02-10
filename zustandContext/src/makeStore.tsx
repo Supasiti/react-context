@@ -63,20 +63,16 @@ export function makeStoreContext<TStore extends object>(
 
   const useStore = <T,>(selector: (state: TStore) => T): T => {
     const context = useContext(storeContext)!;
-    const isResultFunction = typeof selector(context.getState()) === "function";
 
-    const [localState, setLocalState] = useState(() => {
-      if (!isResultFunction) return selector(context.getState());
-      return null;
-    });
+    const [localState, setLocalState] = useState(() =>
+      selector(context.getState())
+    );
 
     useEffect(() => {
-      if (!isResultFunction) {
-        context.subscribe((value) => setLocalState(selector(value)));
-      }
+      context.subscribe((value) => setLocalState(() => selector(value)));
     }, []);
 
-    return localState ?? selector(context.getState());
+    return localState;
   };
 
   return { StoreProvider, useStore };
