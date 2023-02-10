@@ -1,14 +1,21 @@
-import { makeStore } from "./makeStore";
+import { makeStoreContext } from "./makeStore";
 
-export interface FullName {
+export type FullName = {
   firstName: string;
   lastName: string;
-}
+};
+export type FullNameStore = FullName & {
+  setName: (newName: Partial<FullName>) => void;
+};
 export type FullNameKey = keyof FullName;
 
-const initialValue = { firstName: "", lastName: "" };
+const context = makeStoreContext<FullNameStore>((_, set) => ({
+  firstName: "",
+  lastName: "",
+  setName: (newName: Partial<FullName>) => {
+    set(newName);
+  },
+}));
 
-const { StoreProvider: FullNameProvider, useStore: useFullNameStore } =
-  makeStore(initialValue);
-
-export { FullNameProvider, useFullNameStore };
+export const FullNameProvider = context.StoreProvider;
+export const useFullNameStore = context.useStore;

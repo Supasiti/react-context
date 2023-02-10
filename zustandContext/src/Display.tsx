@@ -17,7 +17,7 @@ interface InfoProps {
 }
 
 function Info(props: InfoProps) {
-  const [value,]  = useFullNameStore((state) => state[props.name]);
+  const value = useFullNameStore((state) => state[props.name]);
 
   return (
     <div className="container grid">

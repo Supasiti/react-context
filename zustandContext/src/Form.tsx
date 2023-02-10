@@ -18,7 +18,8 @@ interface InputProps {
 
 function Input(props: InputProps) {
   const { name, label } = props;
-  const [value, handleChange] = useFullNameStore((state) => state[name]);
+  const value = useFullNameStore((state) => state[name]);
+  const handleChange = useFullNameStore((state) => state.setName);
 
   return (
     <label htmlFor={name} className="container">

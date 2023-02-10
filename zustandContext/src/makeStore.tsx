@@ -7,58 +7,76 @@ import {
   useState,
 } from "react";
 
-export function makeStore<TStore>(initialValue: TStore) {
+type GetStore<T> = () => T;
+type SetStore<T> = (value: Partial<T>) => void;
+type StoreConfig<T> = (get: GetStore<T>, set: SetStore<T>) => T;
+type BaseStore<T> = {
+  getState: GetStore<T>;
+  setState: SetStore<T>;
+  subscribe: (listener: (value: T) => void) => () => boolean;
+};
+
+export function makeBaseStore<TStore extends object>(
+  config: StoreConfig<TStore>
+): BaseStore<TStore> {
   const subscribers = new Set<(value: TStore) => void>();
 
-  const useStoreState = () => {
-    const stateRef = useRef(initialValue);
+  let state: TStore;
 
-    const setState = (newValue: Partial<TStore>) => {
-      stateRef.current = { ...stateRef.current, ...newValue };
-      subscribers.forEach((listener) => {
-        listener(stateRef.current);
-      });
-    };
-
-    const getState = () => stateRef.current;
-
-    const subscribe = (listener: (value: TStore) => void) => {
-      subscribers.add(listener);
-      return () => subscribers.delete(listener);
-    };
-
-    return { getState, setState, subscribe };
+  const setState = (newValue: Partial<TStore>) => {
+    state = Object.assign({}, state, newValue);
+    subscribers.forEach((listener) => {
+      listener(state);
+    });
   };
 
-  type StoreState = ReturnType<typeof useStoreState>;
-  const storeContext = createContext<StoreState | null>(null);
+  const getState = () => state;
+
+  const subscribe = (listener: (value: TStore) => void) => {
+    subscribers.add(listener);
+    return () => subscribers.delete(listener);
+  };
+
+  state = config(getState, setState);
+
+  return { getState, setState, subscribe };
+}
+
+export function makeStoreContext<TStore extends object>(
+  config: StoreConfig<TStore>
+) {
+  const storeContext = createContext<BaseStore<TStore> | null>(null);
+  const baseStore = makeBaseStore(config);
 
   type StoreProviderProps = {
     children: ReactNode;
   };
 
   const StoreProvider = (props: StoreProviderProps) => {
-    const value = useStoreState();
+    const value = useRef(baseStore);
     return (
-      <storeContext.Provider value={value}>
+      <storeContext.Provider value={value.current}>
         {props.children}
       </storeContext.Provider>
     );
   };
 
-  const useStore = <T,>(
-    selector: (state: TStore) => T
-  ): [T, (newValue: Partial<TStore>) => void] => {
+  const useStore = <T,>(selector: (state: TStore) => T): T => {
     const context = useContext(storeContext)!;
-    const [localState, setLocalState] = useState(() =>
-      selector(context.getState())
-    );
+    const isResultFunction = typeof selector(context.getState()) === "function";
+
+    const [localState, setLocalState] = useState(() => {
+      if (!isResultFunction) return selector(context.getState());
+      return null;
+    });
 
     useEffect(() => {
-      context.subscribe((value) => setLocalState(selector(value)));
+      if (!isResultFunction) {
+        context.subscribe((value) => setLocalState(selector(value)));
+      }
     }, []);
 
-    return [localState, context.setState];
+    return localState ?? selector(context.getState());
   };
 
   return { StoreProvider, useStore };
