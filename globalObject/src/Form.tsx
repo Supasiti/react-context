@@ -1,4 +1,4 @@
-import { FullNameKey, useFullNameStore } from "./store";
+import { FullNameKey, fullNameStore } from "./store";
 
 function Form() {
   return (
@@ -18,8 +18,8 @@ interface InputProps {
 
 function Input(props: InputProps) {
   const { name, label } = props;
-  const value = useFullNameStore((state) => state[name]);
-  const handleChange = useFullNameStore((state) => state.setName);
+  const value = fullNameStore.use((state) => state[name]);
+  const handleChange = fullNameStore.use((state) => state.setName);
 
   return (
     <label htmlFor={name} className="container">

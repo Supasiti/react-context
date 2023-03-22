@@ -57,5 +57,5 @@ export function makeStore<TStore extends object>(config: StoreConfig<TStore>) {
     return localState;
   }
 
-  return useStore;
+  return Object.freeze({ use: useStore, ...store });
 }

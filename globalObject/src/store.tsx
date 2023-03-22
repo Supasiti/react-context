@@ -9,10 +9,12 @@ export type FullNameStore = FullName & {
 };
 export type FullNameKey = keyof FullName;
 
-export const useFullNameStore = makeStore<FullNameStore>((set) => ({
+export const fullNameStore = makeStore<FullNameStore>((set) => ({
   firstName: "",
   lastName: "",
   setName: (newName: Partial<FullName>) => {
     set(newName);
   },
 }));
+
+fullNameStore.subscribe((state) => console.log("New State: ", state))

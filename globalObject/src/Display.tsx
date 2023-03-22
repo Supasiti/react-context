@@ -1,4 +1,4 @@
-import { FullNameKey, useFullNameStore } from "./store";
+import { FullNameKey, fullNameStore } from "./store";
 
 function Display() {
   return (
@@ -17,7 +17,7 @@ interface InfoProps {
 }
 
 function Info(props: InfoProps) {
-  const value = useFullNameStore((state) => state[props.name]);
+  const value = fullNameStore.use((state) => state[props.name]);
 
   return (
     <div className="container grid">
