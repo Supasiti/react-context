@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 
 type GetStore<T> = () => T;
 type SetStore<T> = (value: Partial<T>) => void;
-type StoreConfig<T> = (set: SetStore<T>) => T;
+type StoreConfig<T> = (set: SetStore<T>, get: GetStore<T>) => T;
 type BaseStore<T> = {
   getState: GetStore<T>;
   setState: SetStore<T>;
-  subscribe: (listener: (value: T) => void) => () => boolean;
+  subscribe: (listener: (value: T) => void) => () => void;
 };
 
 export function makeBaseStore<TStore extends object>(
@@ -17,9 +17,9 @@ export function makeBaseStore<TStore extends object>(
   let state: TStore;
 
   const setState = (newValue: Partial<TStore>) => {
-    const newState = { ...state, ...newValue };
+    Object.assign(state, newValue);
     subscribers.forEach((listener) => {
-      listener(newState);
+      listener(state);
     });
   };
 
@@ -27,28 +27,35 @@ export function makeBaseStore<TStore extends object>(
 
   const subscribe = (listener: (value: TStore) => void) => {
     subscribers.add(listener);
-    return () => subscribers.delete(listener);
+    return () => {
+      subscribers.delete(listener);
+    };
   };
 
-  state = config(setState);
- console.log({state})
+  state = config(setState, getState);
+
   return { getState, setState, subscribe };
 }
 
 export function makeStore<TStore extends object>(config: StoreConfig<TStore>) {
   const store = makeBaseStore(config);
 
-  const useStore = <T,>(selector: (state: TStore) => T): T => {
+  function useStore(): TStore;
+  function useStore<T>(selector: (state: TStore) => T): T;
+  function useStore<T>(selector?: (state: TStore) => T): T | TStore {
     const [localState, setLocalState] = useState(() =>
-      selector(store.getState())
+      selector ? selector(store.getState()) : store.getState()
     );
 
     useEffect(() => {
-      store.subscribe((value) => setLocalState(() => selector(value)));
+      const unsubscribe = store.subscribe((value) =>
+        setLocalState(() => (selector ? selector(value) : value))
+      );
+      return unsubscribe;
     }, []);
 
     return localState;
-  };
+  }
 
   return useStore;
 }
